@@ -53,7 +53,9 @@ services:
 
 networks:
   pegasus_monitoring:
+    name: pegasus_monitoring
     driver: bridge
 
 volumes:
   grafana-storage:
+    name: grafana-storage
