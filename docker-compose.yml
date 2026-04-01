@@ -7,6 +7,8 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     command:
       - '--path.procfs=/host/proc'
       - '--path.rootfs=/rootfs'
@@ -20,28 +22,31 @@ services:
     image: prom/prometheus:main-distroless
     container_name: prometheus
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     expose:
       - 9090
     networks:
       - pegasus_monitoring
   grafana:
-    image: grafana/grafana-oss:latest
+    build: grafana
+    image: grafana
     container_name: grafana-service
     restart: always
-    user: "1000"
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
-      - GF_SECURITY_ADMIN_USER=myadmin
-      - GF_SECURITY_ADMIN_PASSWORD=grafana
       - GF_SERVER_PROTOCOL=https
-      - GF_SERVER_CERT_FILE=/etc/grafana/certs/grafana.crt
-      - GF_SERVER_CERT_KEY=/etc/grafana/certs/grafana.key
+      - GF_SERVER_CERT_FILE=/etc/grafana/grafana.crt
+      - GF_SERVER_CERT_KEY=/etc/grafana/grafana.key
     volumes:
-      - ./certs/:/etc/grafana/certs/:ro
-      - ./grafana-storage:/var/lib/grafana
-      - ./datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/config/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - pegasus_monitoring
 
@@ -49,3 +54,6 @@ services:
 networks:
   pegasus_monitoring:
     driver: bridge
+
+volumes:
+  grafana-storage:
